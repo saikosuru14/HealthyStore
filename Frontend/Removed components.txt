@@ -1,0 +1,478 @@
+Oils.jsx
+______________
+
+import React, { useState,useEffect } from 'react';
+import './Oils.css';
+
+export default function Oils() {
+    const [oilsrecord,setOilrecord]=useState("");
+    useEffect(() => {
+        fetch("http://localhost:8081/oils/Oils_list")
+        .then(result => result.json())
+        .then(
+            (result) => {
+            console.log("Records received")
+            console.log(result)
+            setOilrecord(result)
+        })
+    }, [])
+
+    return (
+        <div className="images">
+            <h1 class="innerClass">{oilsrecord && oilsrecord.map(record => (
+                <div key={record.id}>
+                <img className="img" src={record.image}/>
+                <p class="name">{record.name}</p>
+                <p class="price">price:{record.price}</p>
+                </div>
+            ))}</h1>
+        </div>
+    )
+}
+
+
+
+Oils.css
+____________
+
+
+.images{
+    background-color: #31c48d;
+}
+.innerClass{
+    display: flex;
+    justify-content: space-evenly;
+}
+.img{
+    padding-top: 25px;
+    height: 150px;
+    width:150px;
+}
+.name{
+    color:white;
+    size: 0.5px;
+}
+
+
+
+
+Shop.jsx
+_____________________
+
+import React from 'react'
+import './Shop.css'
+import Navbar from './Navbar'
+import Footer from './Footer'
+import { useState,useEffect } from 'react';
+// import Cart from './Cart'
+// import {Link} from 'react-router-dom'
+import Oils from './images/Oils.jfif';
+
+
+export default function Menu() {
+
+
+    const [oilsrecord,setOilrecord]=useState("");
+    useEffect(() => {
+        fetch("http://localhost:8081/oils/Oils_list")
+        .then(result => result.json())
+        .then(
+            (result) => {
+            console.log("Records received")
+            console.log(result)
+            setOilrecord(result)
+        })
+    }, [])
+    
+    function removeCartItem(event) {
+        var buttonClicked = event.target //The clicked button item
+        buttonClicked.parentElement.parentElement.remove() //to remove entire cart row
+        updateCartTotal()
+    }
+
+    function quantityChanged(event) {
+        var input = event.target
+        if (isNaN(input.value) || input.value <= 0) {   //If input quantity is not a number or less than 0
+            input.value = 1
+        }
+        updateCartTotal()
+    }
+
+    // ---------------------------------------------------------------------------------
+    function addToCartClicked(event) {
+        var button = event.target
+        var shopItem = button.parentElement.parentElement
+        var title = shopItem.getElementsByClassName('shop-item-title')[0].innerText
+        var price = shopItem.getElementsByClassName('shop-item-price')[0].innerText
+        var imageSrc = shopItem.getElementsByClassName('shop-item-image')[0].src
+        addItemToCart(title, price, imageSrc)
+        updateCartTotal()
+    }
+    
+    function addItemToCart(title, price, imageSrc) {//creating and adding new cart row for the Oilsitem which is added to cart
+        var cartRow = document.createElement('div')
+        cartRow.classList.add('cart-row')
+        var cartItems = document.getElementsByClassName('cart-items')[0]
+        var cartItemNames = cartItems.getElementsByClassName('cart-item-title')
+        for (let i=0; i < cartItemNames.length; i++) {
+            if (cartItemNames[i].innerText === title) {  //To prevent duplicate adding of same item to cart
+                alert('This item is already added to the cart')
+                return
+            }
+        }
+        //Creating new cart-row
+        var cartRowContents = `
+            <div class="cart-item cart-column">
+                <img class="cart-item-image" src="${imageSrc}" width="100" height="100">
+                <span class="cart-item-title">${title}</span>
+            </div>
+            <span class="cart-price cart-column">${price}</span>
+            <div class="cart-quantity cart-column">
+                <input class="cart-quantity-input" type="number" value="1">
+                <button class="btn btn-danger" type="button" onClick={removeCartItem}>REMOVE</button>
+            </div>`
+        cartRow.innerHTML = cartRowContents
+        cartItems.append(cartRow)        
+}
+    
+    function updateCartTotal() {
+        var cartItemContainer = document.getElementsByClassName('cart-items')[0] //First element is cart items container with cart item rows 
+        var cartRows = cartItemContainer.getElementsByClassName('cart-row') //List of cart item rows
+        var total = 0
+        for (let i=0; i < cartRows.length; i++) {//Looping through each cart-item-row
+            var cartRow = cartRows[i]   //Storing ith cart-item-row
+            var priceElement = cartRow.getElementsByClassName('cart-price')[0] //Only one (first) item in list of elements with class name:cart-price inside cart-row
+            var quantityElement = cartRow.getElementsByClassName('cart-quantity-input')[0]
+            var price = parseFloat(priceElement.innerText.replace('$', ''))//Replacing $ inside the text of priceElement and taking floating number(price) only 
+            var quantity = quantityElement.value //Taking input value but not innerText
+            total = total + (price * quantity) //Total amount for each cart-item-row and adding it to total variable
+        }
+        total = Math.round(total * 100) / 100   //Round off to two decimal places
+        document.getElementsByClassName('cart-total-price')[0].innerText = '$' + total  //Updating total cart amount
+        
+        cartRow.getElementsByClassName('btn-danger')[0].addEventListener('click', removeCartItem)
+        cartRow.getElementsByClassName('cart-quantity-input')[0].addEventListener('change', quantityChanged)
+   
+    }
+
+//------------------------------------------------------------------------------------------------------------------
+function purchaseClicked() {
+    alert('Thank you for your purchase!')
+    var cartItems = document.getElementsByClassName('cart-items')[0]
+    while (cartItems.hasChildNodes()) {
+        cartItems.removeChild(cartItems.firstChild)
+    }
+    updateCartTotal()
+}
+//---------------------------------------------------------------------------------------------------------
+ 
+return (
+        <div className="app"><Navbar/>
+        <section className="container content-section">
+            <h2 className="section-header">Restore your Energy!</h2>
+            <div className="shop-items">
+
+                <div className="shop-item">{oilsrecord && oilsrecord.map(record => (
+                    <div key={record.id}>
+                    <span className="shop-item-title">{record.name}</span>
+                    <img className="shop-item-image" src={record.image} alt="Oils"/>
+                    <div className="shop-item-details">
+                        <span className="shop-item-price">${record.price}</span>
+                        <button className="btn btn-primary" type="button" onClick={addToCartClicked}>ADD TO CART</button>
+                    </div>
+                    </div>
+                    ))}
+                </div>
+                
+            </div>
+        </section>
+{/* -------------------------------------------------------------------------------------------------- */}
+        <section className="container content-section">
+            <h2 className="section-header">CART</h2>
+            <div className="cart-row">
+                <span className="cart-item cart-header cart-column">ITEM</span>
+                <span className="cart-price cart-header cart-column">PRICE</span>
+                <span className="cart-quantity cart-header cart-column">QUANTITY</span>
+            </div>
+            {/* -------------------------------------------------------------------------- */}
+            <div className="cart-items">
+            </div>
+            {/* --------------------------------------------------------------------------- */}
+            <div className="cart-total">
+                <strong className="cart-total-title">Total</strong>
+                <span className="cart-total-price"><b>$0</b></span>
+            </div>
+            <button className="btn btn-primary btn-purchase" type="button" onClick={purchaseClicked}>PURCHASE</button>
+        </section>
+        <Footer />
+    </div>
+    )
+}
+
+
+
+
+
+Cart.jsx
+___________________
+import React from 'react'
+// import './Shop.css'
+import {useNavigate} from 'react-router-dom'
+// import Oils from './Oils'
+import InsertOils from './InsertOils'
+
+export default function Cart() {
+    const handleClick = useNavigate()
+    return (
+        <div>
+            <h1>Cart</h1>
+            {/* <Oils/> */}
+            <InsertOils/>
+            <button className="btn btn-primary" onClick={()=>handleClick('/shop')}>Shop</button>
+        </div>
+    )
+}
+
+
+InsertOils.jsx
+___________________
+
+import React, { useState } from 'react'
+import axios from 'axios'
+
+export default function InsertOils() {
+    //Creation of oils json
+    const [Cart,setOils]=useState([
+        {   //Fields name should be same as the Table Coloumn name
+            "id":0,
+            "name":"",
+            "image":"",
+            "price":""
+        }
+    ]);
+    function changeDetails(e){
+      
+        let val=e.target.value;
+        setOils({...Cart,[e.target.name]:val})
+    }
+    const insertFunction = async (e) => {
+        await axios.post('http://localhost:8081/cart/insert',Cart)
+    }
+    return (
+        <div>
+            <form>
+                Id:<input type="number" name="id" value={Cart.id} onChange={(e) => changeDetails(e)}/><br/>
+                Name:<input type="text" name="name" value={Cart.name} onChange={(e) => changeDetails(e)}/><br/>
+                Image Url:<input type="text" name="image" value={Cart.image} onChange={(e) => changeDetails(e)}/><br/>
+                price:<input type="number" name="price" value={Cart.price} onChange={(e)=>changeDetails(e)}/>
+                <input type="submit" name="insertbutton" value="Insert" onClick={(e) => insertFunction(e)}/>
+            </form>
+        </div>
+    )
+}
+
+
+ShopMenu.jsx
+_______________________
+import React from 'react'
+import './Shop.css'
+import { useState,useEffect } from 'react';
+import Cart from './Cart'
+import Shop2 from './Shop2'
+import Navbar from './Navbar'
+
+const ShopMenu = () => {
+
+    const [show, setShow] = useState(true);
+    const [cart, setCart] = useState([]);
+
+    const handleClick = (oilsrecord) => {
+    if (cart.indexOf(oilsrecord) !== -1) return;
+    setCart([...cart, oilsrecord]);
+    };
+
+    const handleChange = (oilsrecord, d) => {
+    const ind = cart.indexOf(oilsrecord);
+    const arr = cart;
+    arr[ind].amount += d;
+
+    if (arr[ind].amount === 0) arr[ind].amount = 1;
+    setCart([...arr]);
+    };
+
+    return (
+        <div >
+             <Navbar setShow={setShow} size={cart.length} />
+             {show ? (
+                <Shop2 handleClick={handleClick} />
+            ) : (
+                <Cart cart={cart} setCart={setCart} handleChange={handleChange} />
+            )}
+        </div>
+    )
+}
+
+export default ShopMenu;
+
+
+
+Cards.jsx
+________________
+
+import React from 'react'
+
+export default function Cards({item}) {
+    const{id,name,image,price} = item;
+    return (
+        <div>
+            <div key={id}>
+                <span className="shop-item-title">{name}</span>
+                <img className="shop-item-image" src={image} alt="Oils"/>
+                <div className="shop-item-details">
+                    <span className="shop-item-price">${price}</span>
+                    <button className="btn btn-primary" type="button" >ADD TO CART</button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
+
+
+LogIn2.js
+---------------------------------------------
+
+import React from 'react';
+import axios from 'axios';
+import { useState } from 'react';
+import './Login.css'
+import { Link,useNavigate } from 'react-router-dom';
+
+export default function Login2() {
+  const [users, setUsers] = useState([
+    {
+      "username": "",
+      "password":""
+    }
+  ])
+  const handleClick=useNavigate();
+
+  function changeDetails(e){
+    let val = e.target.value;
+    setUsers({...users,[e.target.name]:val})  
+  }
+  const verifyFunction= async(e)=>{
+    e.preventDefault();
+    const result = await axios.post('http://localhost:8081/users/verify',users)
+    console.log(result.data)
+//     const userId=result.data;
+    if (result.data>0){
+      const user = {
+//         userId:userId,
+        username:users.username
+      }
+      localStorage.setItem('token',JSON.stringify(user))
+      alert('login successful')
+      handleClick("/")
+
+    //   handleClick('/tickets',{state: {username:users.username}})
+    }
+    else if(result.data===0){
+      alert('password incorrect')
+    }
+    else if(result.data === -1){
+      alert('user doesnot exist please register')
+    }
+
+  }
+  return (
+    <div className="login-container">
+      <form className="login-form">
+      <h1 className='headings'>Login here</h1>
+      <input type="text" name="username" className='formcontrol' value={users.username}
+       placeholder="Username"  required onChange={(e) =>changeDetails(e)} />
+       <input type="text" name="password" className='formcontrol' placeholder="password"
+        value={users.password} required onChange={(e) =>changeDetails(e)}  />
+        <button  type="submit" onClick={(e) =>  verifyFunction(e)}>LOGIN</button>
+        <p className='para'>Don't have an account <Link to='/signup'><h2 className='text-[#110233]'>Click here</h2></Link></p>
+      </form>
+    </div>
+    )
+}
+
+
+SignUp2.js
+------------------------------------------------------------------
+import React from 'react';
+import axios from 'axios';
+import { useState } from "react";
+import { Link,Navigate } from 'react-router-dom';
+
+export default function SignUp2() {
+  const [users, setUsers] = useState([
+    {
+
+      "id":0,
+      "username": "",
+      "email":" ",
+      "password":""
+    }
+  ])
+
+  function changeDetails(e){
+    let val = e.target.value;
+    setUsers({...users,[e.target.name]:val})  
+
+  }
+  const insertFunction= async(e) => {
+    const res = await axios.post('http://localhost:8081/users/insert',users)
+    if(res) alert('succesfully registered');
+    // <Navigate replace to='/login' />
+  }
+  return (
+    <div className="register-container">
+    <form className="register-form" >
+    <h1 className='headings'>Register</h1>
+    <p className='para'>Fill Information Below</p>
+     <input type="text"
+name="username"
+className='formcontrol'
+placeholder="UserName"
+onChange={(e) =>
+  changeDetails(e)
+
+   }
+/>
+<input type="text"
+className='formcontrol'
+name="email"
+placeholder="email"
+onChange={(e) =>
+  changeDetails(e)}          
+
+/>
+
+<input type="text"
+className='formcontrol'
+    name="password"
+    placeholder="password"
+    onChange={(e) =>
+      changeDetails(e)}          
+    />
+
+    <center>
+    <button type="submit"onClick={(e) => insertFunction(e)} >Register</button>
+    </center>
+
+    <p className='para'>Already have an account /<Link to='/login'><h2 className='text-[#110233]'>Click here</h2></Link> </p>
+
+    </form>
+
+</div>
+
+  )
+
+}
+  
+
+
