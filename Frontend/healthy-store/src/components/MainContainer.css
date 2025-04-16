@@ -1,0 +1,53 @@
+.home-container{
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    font-family: "Booter - Zero Zero";
+    color: black;
+    font-size:20px;
+    /* background-color: rgba(238, 209, 177, 0.986); */
+}
+.home-container-content{
+    margin:10px 50px;
+    padding:10px 50px;
+}
+
+.home-container-content p{
+    /* font-family: "Booter - Zero Zero"; */
+    color: black;
+    font-size: 0.9em;
+    text-align: justify;
+}
+.home-container h3{
+    color: rgb(12, 135, 184);
+    font-family: "Booter - Zero Zero";
+}
+
+
+ul{
+    color: black;
+}
+.home-btn{
+    background: linear-gradient(
+  135deg
+  , rgb(31, 163, 240) 0%, #f72c2c 100%);
+    padding: 15px;
+    border: none;
+    border-radius: 50px;
+    color: white;
+    font-weight: 400;
+    font-size: 1.2rem;
+    margin-top: 10px;
+    width:30%;
+    letter-spacing: .11rem;
+    outline:none;
+    align-self: center;
+  }
+  
+  .home-btn:hover
+  {
+  transform: scale(1.05) translateY(-3px);
+    box-shadow: 3px 3px 6px #38373785;
+  }
+  
